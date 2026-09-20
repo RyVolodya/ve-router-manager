@@ -1,12 +1,20 @@
-<h1><img src="docs/images/ve-router-manager-logo.svg" alt="VE Router Manager logo" width="48"> VE Router Manager</h1>
+<h1 align="center">
+  <img src="docs/images/ve-router-manager-logo.svg" alt="VE Router Manager logo" width="52">
+  VE Router Manager
+</h1>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Proxmox-VE-E57000?logo=proxmox&logoColor=white" alt="Proxmox VE">
+  <img src="https://img.shields.io/badge/Linux-host-FCC624?logo=linux&logoColor=black" alt="Linux host">
+  <img src="https://img.shields.io/badge/IPv4%20%2B%20IPv6-dual--stack-2f80ff" alt="IPv4 + IPv6 dual-stack">
+  <img src="https://img.shields.io/badge/WireGuard-supported-88171A?logo=wireguard&logoColor=white" alt="WireGuard supported">
+</p>
 
 **VE Router Manager (PRM)** is a lightweight network and router management interface for **Proxmox VE**.
 
 PRM runs directly on the Proxmox host and provides a dedicated web interface for routing, NAT, DHCP, IPv4/IPv6, WireGuard and Proxmox firewall integration — without requiring a separate router VM.
 
-[Quick Start](#-quick-start) · [Features](#-what-can-prm-do) ·
-[Screenshots](#-screenshots) · [Security](#-security-considerations) ·
-[Roadmap](#-roadmap)
+[Quick Start](https://github.com/RyVolodya/ve-router-manager#-quick-start) · [Features](https://github.com/RyVolodya/ve-router-manager#-what-can-prm-do) · [Screenshots](https://github.com/RyVolodya/ve-router-manager#-screenshots) · [Installation](https://github.com/RyVolodya/ve-router-manager#installation) · [Security](https://github.com/RyVolodya/ve-router-manager#-security-considerations) · [Roadmap](https://github.com/RyVolodya/ve-router-manager#-roadmap)
 
 ![VE Router Manager Dashboard](docs/images/dashboard.png)
 
@@ -65,7 +73,7 @@ Cluster node example:
 
 ```text
 Node: prox-lab · HTTPS :8005
-Cluster: Main-cluster (192.168.0.10)
+Cluster: Main-cluster (192.168.50.10)
 ```
 
 The cluster address shown is the Corosync address of the current node.
@@ -379,7 +387,7 @@ Example:
 
 ```text
 IN ACCEPT
-Source: 192.168.0.0/24
+Source: 192.168.50.0/24
 Protocol: TCP
 Destination Port: 8006
 ```
@@ -513,6 +521,18 @@ dpkg-query -W prm
 
 ---
 
+## Installation
+
+Download the latest `.deb` package from GitHub Releases and install it with:
+
+```bash
+apt install ./prm_0.4.25_all.deb
+```
+
+For upgrades, install the newer `.deb` package with the same command.
+
+---
+
 ## Access
 
 PRM:
@@ -604,7 +624,7 @@ PRM v0.4.24
 Package:
 
 ```text
-prm_0.4.25_all.deb
+prm_0.4.24_all.deb
 ```
 
 SHA256:
@@ -656,6 +676,42 @@ Cluster administration
 ### Dashboard
 
 ![PRM Dashboard](docs/images/dashboard.png)
+
+### Interfaces
+
+```text
+docs/images/interfaces.png
+```
+
+### DHCP
+
+```text
+docs/images/dhcp.png
+```
+
+### Routing
+
+```text
+docs/images/routing.png
+```
+
+### NAT
+
+```text
+docs/images/nat.png
+```
+
+### WireGuard
+
+```text
+docs/images/wireguard.png
+```
+
+### Firewall
+
+```text
+docs/images/firewall.png
+```
 
 Additional screenshots can be added as the project evolves.
 
@@ -712,6 +768,6 @@ Always verify network changes carefully, especially on remotely managed servers.
 
 *Routing · NAT · DHCP · IPv4/IPv6 · WireGuard · Firewall for Proxmox VE*
 
-**v0.4.25**
+**v0.4.24**
 
 </div>
