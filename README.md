@@ -510,7 +510,7 @@ https://PROXMOX-IP:8006
 Upgrade an existing installation:
 
 ```bash
-apt install ./prm_0.4.24_all.deb
+apt install ./prm_0.4.32_all.deb
 ```
 
 Check installed version:
@@ -526,7 +526,7 @@ dpkg-query -W prm
 Download the latest `.deb` package from GitHub Releases and install it with:
 
 ```bash
-apt install ./prm_0.4.25_all.deb
+apt install ./prm_0.4.32_all.deb
 ```
 
 For upgrades, install the newer `.deb` package with the same command.
@@ -618,13 +618,13 @@ Network changes should always be tested carefully on remote Proxmox systems to a
 Current release:
 
 ```text
-PRM v0.4.24
+PRM v0.4.32
 ```
 
 Package:
 
 ```text
-prm_0.4.24_all.deb
+prm_0.4.32_all.deb
 ```
 
 SHA256:
@@ -680,38 +680,28 @@ Cluster administration
 ### Interfaces
 
 ```text
-docs/images/interfaces.png
+![PRM Dashboard]{docs/images/interfaces.png}
 ```
 
 ### DHCP
 
-```text
 docs/images/dhcp.png
-```
 
 ### Routing
 
-```text
 docs/images/routing.png
-```
 
 ### NAT
 
-```text
 docs/images/nat.png
-```
 
 ### WireGuard
 
-```text
 docs/images/wireguard.png
-```
 
 ### Firewall
 
-```text
 docs/images/firewall.png
-```
 
 Additional screenshots can be added as the project evolves.
 
@@ -759,6 +749,15 @@ PRM modifies host-level networking, routing, NAT and firewall configuration.
 Incorrect network or firewall configuration can cause loss of access to the Proxmox node.
 
 Always verify network changes carefully, especially on remotely managed servers.
+
+---
+
+## License
+
+This project is licensed under the GPLv3 License.
+See the [LICENSE](LICENSE) file for details.
+
+Copyright © 2026 Volodymyr Rybak.
 
 ---
 
