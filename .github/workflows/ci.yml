@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-metadata:
+    name: Debian / Package metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate Debian packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(prm_*_all.deb)
+          if (( ${#packages[@]} == 0 )); then
+            echo 'No prm_*_all.deb packages found at repository root' >&2
+            exit 1
+          fi
+          for package in "${packages[@]}"; do
+            echo "Checking $package"
+            dpkg-deb --info "$package"
+            dpkg-deb --contents "$package" > /dev/null
+            name=$(dpkg-deb -f "$package" Package)
+            version=$(dpkg-deb -f "$package" Version)
+            arch=$(dpkg-deb -f "$package" Architecture)
+            [[ "$name" == "prm" ]] || { echo "Unexpected package name: $name" >&2; exit 1; }
+            [[ "$arch" == "all" ]] || { echo "Unexpected architecture: $arch" >&2; exit 1; }
+            [[ -n "$version" ]] || { echo 'Missing Debian package version' >&2; exit 1; }
+            echo "OK: $name $version ($arch)"
+          done
+
+  package-scripts:
+    name: Debian / Maintainer scripts
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check package install/remove scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(prm_*_all.deb)
+          (( ${#packages[@]} > 0 )) || { echo 'No Debian packages found' >&2; exit 1; }
+          for package in "${packages[@]}"; do
+            workdir=$(mktemp -d)
+            dpkg-deb --ctrl-tarfile "$package" | tar -xf - -C "$workdir"
+            for script in preinst postinst prerm postrm config; do
+              if [[ -f "$workdir/$script" ]]; then
+                echo "Checking $package: $script"
+                sh -n "$workdir/$script"
+              fi
+            done
+            rm -rf "$workdir"
+          done
+
+  package-python:
+    name: Debian / Python syntax
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check Python files inside packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          packages=(prm_*_all.deb)
+          (( ${#packages[@]} > 0 )) || { echo 'No Debian packages found' >&2; exit 1; }
+          for package in "${packages[@]}"; do
+            root=$(mktemp -d)
+            dpkg-deb -x "$package" "$root"
+            PACKAGE_ROOT="$root" python - <<'PY'
+          import ast
+          import os
+          from pathlib import Path
+          root = Path(os.environ['PACKAGE_ROOT'])
+          files = sorted(root.rglob('*.py'))
+          for path in files:
+              ast.parse(path.read_text(encoding='utf-8-sig'), filename=str(path))
+          print(f'Checked {len(files)} Python files in package')
+          PY
+            rm -rf "$root"
+          done
