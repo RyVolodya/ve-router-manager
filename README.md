@@ -492,7 +492,7 @@ Download the latest `.deb` package from GitHub Releases.
 Install PRM:
 
 ```bash
-apt install ./prm_0.4.24_all.deb
+apt install ./prm_0.4.32_all.deb
 ```
 
 Open PRM:
@@ -767,6 +767,6 @@ Copyright © 2026 Volodymyr Rybak.
 
 *Routing · NAT · DHCP · IPv4/IPv6 · WireGuard · Firewall for Proxmox VE*
 
-**v0.4.24**
+**v0.4.32**
 
 </div>
