@@ -492,7 +492,7 @@ Download the latest `.deb` package from GitHub Releases.
 Install PRM:
 
 ```bash
-apt install ./prm_0.4.32_all.deb
+apt install ./prm_0.4.35_all.deb
 ```
 
 Open PRM:
@@ -510,7 +510,7 @@ https://PROXMOX-IP:8006
 Upgrade an existing installation:
 
 ```bash
-apt install ./prm_0.4.32_all.deb
+apt install ./prm_0.4.35_all.deb
 ```
 
 Check installed version:
@@ -526,7 +526,7 @@ dpkg-query -W prm
 Download the latest `.deb` package from GitHub Releases and install it with:
 
 ```bash
-apt install ./prm_0.4.32_all.deb
+apt install ./prm_0.4.35_all.deb
 ```
 
 For upgrades, install the newer `.deb` package with the same command.
@@ -618,13 +618,13 @@ Network changes should always be tested carefully on remote Proxmox systems to a
 Current release:
 
 ```text
-PRM v0.4.32
+PRM v0.4.35
 ```
 
 Package:
 
 ```text
-prm_0.4.32_all.deb
+prm_0.4.35_all.deb
 ```
 
 SHA256:
@@ -767,6 +767,6 @@ Copyright © 2026 Volodymyr Rybak.
 
 *Routing · NAT · DHCP · IPv4/IPv6 · WireGuard · Firewall for Proxmox VE*
 
-**v0.4.32**
+**v0.4.35**
 
 </div>
