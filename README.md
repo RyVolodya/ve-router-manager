@@ -584,6 +584,25 @@ No additional router VM is required.
 
 ---
 
+## ⚠️ Production Warning
+
+VE Router Manager modifies **host-level networking** directly on the Proxmox VE server, including interfaces, routing, NAT, DHCP, WireGuard and firewall configuration.
+
+An incorrect configuration may cause **loss of remote access, network outages, routing problems or unintended service exposure**.
+
+Before using PRM on a production system:
+
+- Test the required configuration in a lab or non-production environment first.
+- Keep a backup of the current Proxmox network and firewall configuration.
+- Make sure console or out-of-band access to the Proxmox host is available.
+- Verify routing, NAT and firewall changes carefully before relying on them remotely.
+
+PRM includes safety mechanisms such as rollback protection for supported network changes, but no software-based safeguard can guarantee recovery from every possible configuration error.
+
+**Use VE Router Manager on production systems at your own risk.**
+
+---
+
 ## ⚡ Quick Start
 
 Download the latest `.deb` package from GitHub Releases.
@@ -919,11 +938,15 @@ Remove passwords, private keys, public addresses and other sensitive information
 
 ## Disclaimer
 
-PRM modifies host-level networking, routing, NAT and firewall configuration.
+VE Router Manager is provided **as-is and without warranty**.
 
-Incorrect network or firewall configuration can cause loss of access to the Proxmox node.
+PRM modifies host-level networking, routing, NAT, DHCP, WireGuard and firewall configuration. Incorrect configuration can cause loss of access to the Proxmox node, network outages, service interruption or unintended exposure of internal services.
 
-Always verify network changes carefully, especially on remotely managed servers.
+The user is responsible for reviewing the configuration, maintaining backups and ensuring that recovery or console access is available before applying changes.
+
+The developer is not responsible for loss of connectivity, service interruption, data loss, security exposure or other damage resulting from the installation, configuration or use of VE Router Manager.
+
+Always verify network changes carefully, especially on remotely managed or production servers, and use the software at your own risk.
 
 ---
 
