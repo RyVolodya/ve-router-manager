@@ -10,11 +10,11 @@
   <img src="https://img.shields.io/badge/WireGuard-supported-88171A?logo=wireguard&logoColor=white" alt="WireGuard supported">
 </p>
 
-**VE Router Manager (PRM)** is a lightweight network and router management interface for **Proxmox VE**.
+**VE Router Manager (PRM)** is a lightweight host-native network and router management interface for **Proxmox VE**.
 
-PRM runs directly on the Proxmox host and provides a dedicated web interface for routing, NAT, DHCP, IPv4/IPv6, WireGuard and Proxmox firewall integration — without requiring a separate router VM.
+PRM runs directly on the Proxmox host and provides a dedicated HTTPS web interface for interfaces, networks, routing, NAT, DHCP, IPv4/IPv6, WireGuard, Proxmox Firewall, read-only Proxmox SDN VNet visibility and live network topology — without requiring a separate router VM.
 
-[Quick Start](https://github.com/RyVolodya/ve-router-manager#-quick-start) · [Features](https://github.com/RyVolodya/ve-router-manager#-what-can-prm-do) · [Screenshots](https://github.com/RyVolodya/ve-router-manager#-screenshots) · [Installation](https://github.com/RyVolodya/ve-router-manager#installation) · [Security](https://github.com/RyVolodya/ve-router-manager#-security-considerations) · [Roadmap](https://github.com/RyVolodya/ve-router-manager#-roadmap)
+[Quick Start](https://github.com/RyVolodya/ve-router-manager#-quick-start) · [Features](https://github.com/RyVolodya/ve-router-manager#-what-can-prm-do) · [Topology](https://github.com/RyVolodya/ve-router-manager#topology) · [Screenshots](https://github.com/RyVolodya/ve-router-manager#-screenshots) · [Installation](https://github.com/RyVolodya/ve-router-manager#installation) · [Security](https://github.com/RyVolodya/ve-router-manager#-security-considerations) · [Roadmap](https://github.com/RyVolodya/ve-router-manager#-roadmap)
 
 ![VE Router Manager Dashboard](docs/images/dashboard.png)
 
@@ -35,6 +35,7 @@ Proxmox VE
 PRM focuses on the network layer:
 
 - Interfaces
+- Networks
 - Routing
 - DHCP
 - NAT44 / NAT66
@@ -42,6 +43,8 @@ PRM focuses on the network layer:
 - IPv4 / IPv6
 - Datacenter Firewall
 - Node Firewall
+- Read-only Proxmox SDN VNet visibility
+- Live network topology
 
 Virtual machine and LXC lifecycle management remains in the native Proxmox VE interface.
 
@@ -57,10 +60,12 @@ The Dashboard provides an overview of the current Proxmox node:
 - PRM HTTPS port
 - VM and LXC information
 - Network interfaces
+- Proxmox SDN VNet interfaces in read-only mode
 - WAN IPv4
 - WAN IPv6
 - Interface status
-- RX / TX information
+- Live RX / TX information
+- Live RX / TX counters for deployed SDN VNet interfaces
 - Proxmox cluster information when available
 
 Standalone node example:
@@ -82,7 +87,7 @@ The cluster address shown is the Corosync address of the current node.
 
 ## Interfaces
 
-PRM can manage Proxmox networking directly on the host.
+PRM can manage Proxmox networking directly on the host and displays both active and pending Proxmox network configuration.
 
 Supported interface types include:
 
@@ -91,20 +96,47 @@ Supported interface types include:
 - VLAN
 - Physical interfaces
 - Virtual interfaces
+- Proxmox SDN VNet interfaces — **read-only**
 
-Available operations:
+Available operations for PRM-managed interfaces:
 
 - Create
 - Edit
 - Delete
-- Bring interface Up
-- Bring interface Down
+- Bring virtual interfaces Up
+- Bring virtual interfaces Down
 - IPv4 configuration
 - IPv6 configuration
 - Interface status
 - RX / TX statistics
+- Apply or revert pending Proxmox network changes
+
+Interface changes are staged through Proxmox networking and applied with rollback protection. After a network change is applied, PRM requires confirmation before the rollback timer expires, helping protect remote management access.
+
+Proxmox SDN VNet interfaces are monitoring-only in PRM. They do not expose **Edit**, **Down** or **Delete** controls, and Proxmox SDN remains the source of truth.
 
 PRM uses the native Proxmox network configuration and is designed to coexist with the Proxmox VE web interface.
+
+---
+
+## Networks
+
+The **Networks** page provides a routed-network view of the local Proxmox node.
+
+It displays:
+
+- Interface / network name
+- Description
+- Interface type
+- IPv4 address or subnet
+- IPv4 gateway
+- IPv6 address or subnet
+- IPv6 gateway
+- Bridge ports
+- Proxmox SDN VNet zone metadata
+- SDN VNet IPv4 / IPv6 subnets and runtime addresses
+
+Proxmox SDN VNet networks are displayed **read-only**. PRM does not modify SDN VNet, Zone or Subnet configuration.
 
 ---
 
@@ -117,13 +149,14 @@ PRM supports dual-stack networking.
 Supported configuration includes:
 
 - Static IPv4
+- DHCPv4 client mode using native Proxmox / ifupdown2 networking
 - Gateway
 - Routing
 - NAT44
 - DNAT
 - SNAT
 - DMZ
-- DHCPv4
+- Persistent IPv4 mode restoration after reboot
 
 ### IPv6
 
@@ -132,10 +165,13 @@ Supported configuration includes:
 - Static IPv6
 - SLAAC / Router Advertisement
 - DHCPv6
+- Combined DHCPv6 + SLAAC
+- Optional IPv6 default route learned from Router Advertisement
 - IPv6 routing
 - NAT66
 - WireGuard IPv6
 - IPv6 forwarding
+- Persistent IPv6 mode restoration after reboot
 
 When **Static IPv6** is selected for an interface, PRM disables SLAAC/autoconfiguration on that interface so an additional dynamic IPv6 address is not created beside the configured static address.
 
@@ -154,14 +190,17 @@ PRM provides IPv4 and IPv6 routing management directly on the Proxmox host.
 
 Supported operations include:
 
-- View existing routes
-- Add static routes
+- View existing IPv4 and IPv6 routes
+- Add persistent static routes
 - Edit PRM-managed routes
 - Delete PRM-managed routes
 - IPv4 default routes
 - IPv6 default routes
+- Routes through WireGuard interfaces
 - IPv4 forwarding
 - IPv6 forwarding
+
+Routes created by PRM are restored automatically after reboot.
 
 Example:
 
@@ -177,6 +216,8 @@ fd00:1::/64          dev wg1
 
 PRM includes integrated DHCP services for Proxmox networks.
 
+PRM DHCPv4 uses an isolated per-interface `dnsmasq` process. Native Proxmox SDN DHCP is detected and PRM does not create a duplicate DHCP / RA service on the same VNet.
+
 ### DHCPv4
 
 Features include:
@@ -186,6 +227,9 @@ Features include:
 - DNS servers
 - Lease time
 - Static reservations
+- Editable reservation address and name
+- Duplicate-address validation against reservations, active leases and local addresses
+- L2 address probing before a reservation is created
 - Lease monitoring
 
 ### DHCPv6
@@ -194,14 +238,18 @@ Features include:
 
 - DHCPv6 pools
 - IPv6 DNS servers
-- Static reservations
+- Static reservations using DHCPv6 DUID / client ID
+- Editable reservation addresses
 - DHCPv6 leases
+- Automatic Node Firewall permit for active DHCPv6 services
 
 ### SLAAC
 
 Router Advertisement can be enabled for IPv6 networks.
 
-DHCPv6 and SLAAC can also be used together.
+DHCPv6 and SLAAC can also be used together. In **DHCPv6 + SLAAC** mode, clients may receive both a stateful DHCPv6 address and an autonomous SLAAC address from the same `/64`; the IPv6 default gateway is advertised through RA.
+
+The lease view also includes observed SLAAC addresses learned through IPv6 Neighbor Discovery. Because SLAAC is stateless, those entries do not have a DHCP lease expiry.
 
 Example network:
 
@@ -224,7 +272,9 @@ PRM automatically creates the required Node Firewall rules for active DHCP servi
 
 ## NAT
 
-PRM supports both IPv4 and IPv6 NAT.
+PRM supports both IPv4 and IPv6 NAT using isolated PRM-owned `nftables` tables.
+
+NAT rules are persistent and recreated deterministically after reboot. PRM also handles the Proxmox `fwbr` conntrack-zone requirements needed for NAT to work correctly with Proxmox VM firewall bridges.
 
 ### NAT44
 
@@ -234,6 +284,9 @@ Supported types:
 - MASQUERADE
 - DNAT
 - DMZ
+- Source-interface selection
+- WireGuard interfaces as NAT sources
+- Rule packet / byte counters
 
 ### NAT66
 
@@ -242,6 +295,9 @@ Supported IPv6 NAT functionality includes:
 - IPv6 source NAT
 - IPv6 masquerade
 - IPv6 destination NAT
+- NAT66 DMZ / exposed-host mode when explicitly required
+- WireGuard IPv6 / NAT66 Internet access
+- Rule packet / byte counters
 
 ---
 
@@ -275,7 +331,7 @@ Other traffic  → 10.100.100.100
 
 DMZ therefore acts as the final fallback.
 
-PRM automatically excludes its required management and service ports from DMZ when necessary.
+PRM automatically excludes its required management and service ports from DMZ when necessary. Configured or running WireGuard UDP listener ports are also excluded automatically.
 
 ---
 
@@ -307,16 +363,26 @@ PRM includes integrated WireGuard management.
 Features include:
 
 - Multiple WireGuard interfaces
+- Remote Access peers
+- Site-to-Site peers
 - IPv4 addresses
 - IPv6 addresses
+- Optional automatically allocated ULA IPv6 addressing
 - Peer management
 - Client configuration generation
-- Per-peer network access
-- Internet access
-- IPv4 NAT
-- IPv6 NAT66
+- QR code generation
+- Per-peer access to selected Proxmox bridge networks
+- Internet-only peers
+- IPv4 Internet access through VPN
+- IPv6 Internet access through VPN using NAT66
+- Ordinary main-table routes for Site-to-Site remote networks
 - Persistent keepalive
-- Live peer status
+- Live peer status and traffic counters
+- Automatic Proxmox Node Firewall permit for WireGuard UDP listeners
+
+WireGuard interfaces are also visible where relevant in **Interfaces**, **Dashboard**, **Networks**, **Routing** and **NAT**.
+
+PRM uses normal Linux routing between WireGuard and Proxmox bridge networks and does not create policy-routing rules for WireGuard peers.
 
 Live information includes:
 
@@ -402,9 +468,16 @@ PRM automatically maintains required Node Firewall rules for services such as:
 - DHCPv4
 - DHCPv6
 - WireGuard UDP listeners
-- Required IPv6 traffic
+- Required IPv6 / ICMPv6 traffic
 
 PRM-generated automatic rules are protected from accidental modification or deletion.
+
+Firewall management also includes:
+
+- Datacenter and Node default-policy dialogs
+- API-first synchronization with the current Proxmox Firewall state
+- Immediate backend reload after supported firewall changes
+- A lockout guard for potentially dangerous firewall changes
 
 ---
 
@@ -447,9 +520,35 @@ Node Firewall
 
 Datacenter Firewall configuration remains cluster-wide through the native Proxmox cluster filesystem.
 
-This means that if Datacenter Firewall configuration is changed from another Proxmox node, PRM will display the updated cluster configuration.
+Proxmox SDN configuration is also cluster-level. PRM discovers SDN VNets, Zones and Subnets and displays the relevant local-node runtime state **read-only**.
+
+This means that if Datacenter Firewall or SDN configuration is changed through Proxmox, PRM will display the updated configuration.
 
 PRM does not attempt to manage networking on other cluster nodes remotely.
+
+---
+
+## Topology
+
+The **Topology** page provides a live, draggable view of the local Proxmox networking layout.
+
+It can display:
+
+- Local VM and LXC network attachments
+- Linux bridges
+- Physical and virtual interfaces
+- VLAN labels
+- WAN links
+- Running / stopped link state
+- PRM NAT44 paths
+- PRM NAT66 paths
+- Proxmox SDN VNets and their subnets
+- Proxmox SDN NAT / NAT66 paths
+- Internet / Default Router
+- IPv4 and IPv6 default gateway IP addresses
+- Outgoing interface used by each default route
+
+Topology is a visualization and monitoring view. Proxmox SDN objects shown there remain read-only.
 
 ---
 
@@ -492,7 +591,7 @@ Download the latest `.deb` package from GitHub Releases.
 Install PRM:
 
 ```bash
-apt install ./prm_0.4.49_all.deb
+apt install ./prm_0.4.50_all.deb
 ```
 
 Open PRM:
@@ -510,7 +609,7 @@ https://PROXMOX-IP:8006
 Upgrade an existing installation:
 
 ```bash
-apt install ./prm_0.4.49_all.deb
+apt install ./prm_0.4.50_all.deb
 ```
 
 Check installed version:
@@ -526,10 +625,32 @@ dpkg-query -W prm
 Download the latest `.deb` package from GitHub Releases and install it with:
 
 ```bash
-apt install ./prm_0.4.49_all.deb
+apt install ./prm_0.4.50_all.deb
 ```
 
 For upgrades, install the newer `.deb` package with the same command.
+
+If a corrected package is rebuilt with the same version number, force a reinstall with:
+
+```bash
+apt install --reinstall ./prm_0.4.50_all.deb
+```
+
+### Uninstallation
+
+Remove PRM while keeping package configuration files:
+
+```bash
+apt remove prm
+```
+
+Remove PRM package configuration as well:
+
+```bash
+apt purge prm
+```
+
+PRM removal stops PRM-owned services and removes PRM-owned runtime NAT / WireGuard helper rules. It does not stop or modify the native Proxmox `pveproxy` service or the Proxmox web interface on TCP `8006`.
 
 ---
 
@@ -553,11 +674,22 @@ Both interfaces can operate simultaneously.
 
 ## Authentication
 
-PRM uses Proxmox host authentication.
+PRM supports two authentication modes:
 
-Access is based on Linux PAM credentials from the Proxmox node.
+### Linux PAM
 
-PRM does not require a separate user database.
+- Uses local Linux accounts on the Proxmox node
+- Authentication is performed through PAM
+- No separate PRM user database is required
+
+### Proxmox VE
+
+- Uses Proxmox VE users in `user@realm` format
+- Users must have the `Sys.Modify` privilege on `/`
+- Proxmox VE TOTP two-factor authentication is supported
+- The TOTP field is shown after the password is successfully verified when 2FA is required
+
+Authenticated PRM sessions use secure `HttpOnly`, `Secure`, `SameSite=Strict` cookies.
 
 ---
 
@@ -582,6 +714,26 @@ PRM networking changes are designed to remain persistent after reboot.
 
 PRM runs directly on the Proxmox host and can modify host-level networking, routing, NAT, DHCP, WireGuard and firewall configuration.
 
+### Built-in web security hardening
+
+PRM v0.4.50 includes:
+
+- Login rate limiting / brute-force protection
+- Rate limiting keyed by client IP, username and authentication mode
+- Progressive blocking: 5 failed attempts → 30 seconds, 10 → 5 minutes, 20 → 30 minutes within the rate-limit window
+- HTTP `429 Too Many Requests` with `Retry-After`
+- Per-session CSRF tokens for write requests
+- Same-origin `Origin` / `Referer` validation
+- `HttpOnly`, `Secure`, `SameSite=Strict` session cookies
+- HSTS
+- Content Security Policy (CSP)
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy`
+- `Permissions-Policy`
+- Cross-Origin Opener / Resource Policy headers
+- Static-file path traversal protection
+
 Recommended practices:
 
 - Restrict access to PRM TCP port `8005` to trusted management networks.
@@ -601,6 +753,10 @@ Because PRM operates at the host networking layer, an incorrect route, NAT or fi
 
 PRM is designed to preserve existing configuration during package upgrades.
 
+Network interface changes use a safe apply workflow with a host-side rollback transaction. If the new configuration is not confirmed before the rollback timeout, PRM can restore the previous network state. The active rollback transaction survives a browser refresh or reconnect.
+
+Before applying pending Proxmox network configuration, PRM also checks that the current default-route interface is not accidentally removed.
+
 Before major network changes, it is still recommended to keep a backup of:
 
 ```text
@@ -618,19 +774,19 @@ Network changes should always be tested carefully on remote Proxmox systems to a
 Current release:
 
 ```text
-PRM v0.4.49
+PRM v0.4.50
 ```
 
 Package:
 
 ```text
-prm_0.4.49_all.deb
+prm_0.4.50_all.deb
 ```
 
 SHA256:
 
 ```text
-062809b1a3a9668623e39c695f5075b6f8f627cda4112369780d95b043d15faf
+b8f177b41d471296fd9097453eacdb78cda8ffc2ec86fb173bc3ddc00c85941e
 ```
 
 ---
@@ -656,6 +812,16 @@ Datacenter Firewall
 Node Firewall
 ```
 
+### Read-only visibility in PRM
+
+```text
+Proxmox SDN VNet interfaces
+SDN Zones / Subnets
+VM / LXC network attachments in Topology
+Default gateway details
+Local-node SDN runtime state
+```
+
 ### Managed by Proxmox VE
 
 ```text
@@ -673,35 +839,45 @@ Cluster administration
 
 ## 📸 Screenshots
 
+### Login / Authentication
+
+![PRM Login](docs/images/login.png)
+
 ### Dashboard
 
 ![PRM Dashboard](docs/images/dashboard.png)
 
 ### Interfaces
 
-```text
-![PRM Dashboard]{docs/images/interfaces.png}
-```
+![PRM Interfaces](docs/images/interfaces.png)
+
+### Networks
+
+![PRM Networks](docs/images/networks.png)
+
+### Topology
+
+![PRM Topology](docs/images/topology.png)
 
 ### DHCP
 
-docs/images/dhcp.png
+![PRM DHCP](docs/images/dhcp.png)
 
 ### Routing
 
-docs/images/routing.png
+![PRM Routing](docs/images/routing.png)
 
 ### NAT
 
-docs/images/nat.png
+![PRM NAT](docs/images/nat.png)
 
 ### WireGuard
 
-docs/images/wireguard.png
+![PRM WireGuard](docs/images/wireguard.png)
 
 ### Firewall
 
-docs/images/firewall.png
+![PRM Firewall](docs/images/firewall.png)
 
 Additional screenshots can be added as the project evolves.
 
@@ -720,7 +896,6 @@ Potential future improvements:
 - Extended dashboard monitoring
 - Additional VPN capabilities
 - Improved cluster awareness
-- Network topology visualization
 
 ---
 
@@ -767,6 +942,6 @@ Copyright © 2026 Volodymyr Rybak.
 
 *Routing · NAT · DHCP · IPv4/IPv6 · WireGuard · Firewall for Proxmox VE*
 
-**v0.4.49**
+**v0.4.50**
 
 </div>
