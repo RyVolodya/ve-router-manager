@@ -50,6 +50,18 @@ Virtual machine and LXC lifecycle management remains in the native Proxmox VE in
 
 ---
 
+### Third-Party Integration Notice
+
+**VE Router Manager is an independent third-party add-on and network management interface for Proxmox Virtual Environment.**
+
+It is not an official Proxmox product and is not affiliated with, endorsed by, sponsored by, or maintained by Proxmox Server Solutions GmbH.
+
+VE Router Manager integrates with Proxmox VE through its REST API where applicable for data exchange, authentication and supported management operations. It also manages selected host-level Linux networking components required for routing, NAT, DHCP, WireGuard and related network functionality.
+
+**Proxmox® is a registered trademark of Proxmox Server Solutions GmbH.**
+
+---
+
 ## 🚀 What can PRM do
 
 ### Dashboard
