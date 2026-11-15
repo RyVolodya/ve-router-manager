@@ -622,7 +622,7 @@ Download the latest `.deb` package from GitHub Releases.
 Install PRM:
 
 ```bash
-apt install ./prm_0.4.50_all.deb
+apt install ./prm_0.4.51_all.deb
 ```
 
 Open PRM:
@@ -640,7 +640,7 @@ https://PROXMOX-IP:8006
 Upgrade an existing installation:
 
 ```bash
-apt install ./prm_0.4.50_all.deb
+apt install ./prm_0.4.51_all.deb
 ```
 
 Check installed version:
@@ -656,7 +656,7 @@ dpkg-query -W prm
 Download the latest `.deb` package from GitHub Releases and install it with:
 
 ```bash
-apt install ./prm_0.4.50_all.deb
+apt install ./prm_0.4.51_all.deb
 ```
 
 For upgrades, install the newer `.deb` package with the same command.
@@ -664,7 +664,7 @@ For upgrades, install the newer `.deb` package with the same command.
 If a corrected package is rebuilt with the same version number, force a reinstall with:
 
 ```bash
-apt install --reinstall ./prm_0.4.50_all.deb
+apt install --reinstall ./prm_0.4.51_all.deb
 ```
 
 ### Uninstallation
@@ -747,7 +747,7 @@ PRM runs directly on the Proxmox host and can modify host-level networking, rout
 
 ### Built-in web security hardening
 
-PRM v0.4.50 includes:
+PRM v0.4.51 includes:
 
 - Login rate limiting / brute-force protection
 - Rate limiting keyed by client IP, username and authentication mode
@@ -805,13 +805,13 @@ Network changes should always be tested carefully on remote Proxmox systems to a
 Current release:
 
 ```text
-PRM v0.4.50
+PRM v0.4.51
 ```
 
 Package:
 
 ```text
-prm_0.4.50_all.deb
+prm_0.4.51_all.deb
 ```
 
 SHA256:
@@ -977,6 +977,6 @@ Copyright © 2026 Volodymyr Rybak.
 
 *Routing · NAT · DHCP · IPv4/IPv6 · WireGuard · Firewall for Proxmox VE*
 
-**v0.4.50**
+**v0.4.51**
 
 </div>
